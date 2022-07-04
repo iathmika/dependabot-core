@@ -32,6 +32,10 @@ RUN apt-get update \
     unzip \
     locales \
     openssh-client \
+    less \
+    nano \
+    sshpass \
+    expect \
     software-properties-common \
     make \
     libpq-dev \
@@ -51,6 +55,7 @@ RUN apt-get update \
     libxmlsec1-dev \
     libgeos-dev \
     python3-enchant \
+  && apt-get install -y openssh-client \
   && locale-gen en_US.UTF-8 \
   && rm -rf /var/lib/apt/lists/*
 
@@ -218,6 +223,21 @@ RUN mkdir -p "$RUSTUP_HOME" && chown dependabot:dependabot "$RUSTUP_HOME"
 USER dependabot
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain 1.61.0 --profile minimal
 
+### CLOJURE
++USER root
++# Install leiningen
++RUN apt-get update \
++  && apt-get install -y openjdk-8-jre-headless \
++  && java -version \
++  && curl https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein > lein \
++  && mkdir -p /usr/local/lein/bin \
++  && mv lein /usr/local/lein/bin \
++  && chmod +x /usr/local/lein/bin/lein \
++  && /usr/local/lein/bin/lein --version
++
++ENV PATH="$PATH:/usr/local/lein/bin" \
++  LEIN_SNAPSHOTS_IN_RELEASE="yes"
+
 
 ### Terraform
 
@@ -258,12 +278,14 @@ COPY --chown=dependabot:dependabot pub/helpers /opt/pub/helpers
 COPY --chown=dependabot:dependabot npm_and_yarn/helpers /opt/npm_and_yarn/helpers
 COPY --chown=dependabot:dependabot python/helpers /opt/python/helpers
 COPY --chown=dependabot:dependabot terraform/helpers /opt/terraform/helpers
+COPY --chown=dependabot:dependabot lein/helpers /opt/lein/helpers
 
 ENV DEPENDABOT_NATIVE_HELPERS_PATH="/opt" \
   PATH="$PATH:/opt/terraform/bin:/opt/python/bin:/opt/go_modules/bin" \
   MIX_HOME="/opt/hex/mix"
 
 USER dependabot
+RUN bash /opt/lein/helpers/build /opt/lein
 RUN bash /opt/bundler/helpers/v1/build
 RUN bash /opt/bundler/helpers/v2/build
 RUN bash /opt/composer/helpers/v1/build
@@ -278,3 +300,4 @@ RUN bash /opt/terraform/helpers/build
 ENV HOME="/home/dependabot"
 
 WORKDIR ${HOME}
+CMD ["/bin/bash"]
