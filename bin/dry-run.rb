@@ -126,7 +126,7 @@ $options = {
   security_advisories: [],
   security_updates_only: false,
   ignore_conditions: [],
-  pull_request: false
+  pull_request: true
 }
 
 unless ENV["LOCAL_GITHUB_ACCESS_TOKEN"].to_s.strip.empty?
@@ -813,11 +813,11 @@ dependencies.each do |dep|
      Dir.chdir($repo_contents_path) do
        Dependabot::SharedHelpers.run_shell_command(
          <<~CMD
-         git add project.clj
+         git add .
              CMD
        )
        system("git commit -m '#{msg.commit_message}'")
-       $files.map!{ |x| x.name == "project.clj" ? updated_files.first : x}
+       $files.map!{ |x| x.name == updated_files.first.name ? updated_files.first : x}
      end
   end
 rescue StandardError => e
@@ -827,7 +827,7 @@ end
 #StackProf.stop if $options[:profile]
 #StackProf.results("tmp/stackprof-#{Time.now.strftime('%Y-%m-%d-%H:%M')}.dump") if $options[:profile]
 puts "Pushing commits"
-#push the commits to gerrit via rfc
+
 Dir.chdir($repo_contents_path) do
 # system("git push origin HEAD:refs/for/feature/dependabot")
 end
