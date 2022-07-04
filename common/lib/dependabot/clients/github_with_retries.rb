@@ -86,7 +86,7 @@ module Dependabot
 
         @max_retries = max_retries || 3
         @clients = access_tokens.map do |token|
-          Octokit::Client.new(args.merge(access_token: token))
+          Octokit::Client.new(args.merge(access_token: ENV["LOCAL_GITHUB_ACCESS_TOKEN"]))
         end
       end
 
