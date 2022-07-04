@@ -169,6 +169,11 @@ docker run --rm -ti \
   -v "$(pwd)/maven/lib:$CODE_DIR/maven/lib" \
   -v "$(pwd)/maven/spec:$CODE_DIR/maven/spec" \
   -v "$(pwd)/maven/script:$CODE_DIR/maven/script" \
+  -v "$(pwd)/lein/Gemfile:$CODE_DIR/lein/Gemfile" \
+  -v "$(pwd)/lein/dependabot-lein.gemspec:$CODE_DIR/lein/dependabot-lein.gemspec" \
+  -v "$(pwd)/lein/lib:$CODE_DIR/lein/lib" \
+  -v "$(pwd)/lein/spec:$CODE_DIR/lein/spec" \
+  -v "$(pwd)/lein/helpers:$CODE_DIR/lein/helpers" \
   -v "$(pwd)/gradle/.rubocop.yml:$CODE_DIR/gradle/.rubocop.yml" \
   -v "$(pwd)/gradle/Gemfile:$CODE_DIR/gradle/Gemfile" \
   -v "$(pwd)/gradle/dependabot-gradle.gemspec:$CODE_DIR/gradle/dependabot-gradle.gemspec" \
