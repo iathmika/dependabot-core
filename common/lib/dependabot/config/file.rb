@@ -53,7 +53,8 @@ module Dependabot
         "npm" => "npm_and_yarn",
         "pip" => "pip",
         "pub" => "pub",
-        "terraform" => "terraform"
+        "terraform" => "terraform",
+        "lein" => "lein"
       }.freeze
 
       def ignore_conditions(cfg)
