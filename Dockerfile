@@ -224,19 +224,19 @@ USER dependabot
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain 1.61.0 --profile minimal
 
 ### CLOJURE
-+USER root
-+# Install leiningen
-+RUN apt-get update \
-+  && apt-get install -y openjdk-8-jre-headless \
-+  && java -version \
-+  && curl https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein > lein \
-+  && mkdir -p /usr/local/lein/bin \
-+  && mv lein /usr/local/lein/bin \
-+  && chmod +x /usr/local/lein/bin/lein \
-+  && /usr/local/lein/bin/lein --version
-+
-+ENV PATH="$PATH:/usr/local/lein/bin" \
-+  LEIN_SNAPSHOTS_IN_RELEASE="yes"
+USER root
+# Install leiningen
+RUN apt-get update \
+  && apt-get install -y openjdk-8-jre-headless \
+  && java -version \
+  && curl https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein > lein \
+  && mkdir -p /usr/local/lein/bin \
+  && mv lein /usr/local/lein/bin \
+  && chmod +x /usr/local/lein/bin/lein \
+  && /usr/local/lein/bin/lein --version
+
+ENV PATH="$PATH:/usr/local/lein/bin" \
+  LEIN_SNAPSHOTS_IN_RELEASE="yes"
 
 
 ### Terraform
