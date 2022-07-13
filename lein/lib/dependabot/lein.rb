@@ -24,6 +24,7 @@ require "dependabot/maven/version"
 
 Dependabot::Utils.register_requirement_class("lein", Dependabot::Maven::Requirement)
 Dependabot::Utils.register_version_class("lein", Dependabot::Maven::Version)
+Dependabot::Utils.register_always_clone("lein")
 
 Dependabot::UpdateCheckers.register("lein", Dependabot::Maven::UpdateChecker)
 Dependabot::MetadataFinders.register("lein", Dependabot::Maven::MetadataFinder)
