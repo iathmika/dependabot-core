@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# coding: utf-8
 # frozen_string_literal: true
 
 # This script executes a full update run for a given repo (optionally for a
@@ -33,6 +34,7 @@
 # - docker
 # - terraform
 # - pub
+# - lein
 
 # rubocop:disable Style/GlobalVars
 
@@ -63,6 +65,7 @@ $LOAD_PATH << "./nuget/lib"
 $LOAD_PATH << "./python/lib"
 $LOAD_PATH << "./pub/lib"
 $LOAD_PATH << "./terraform/lib"
+$LOAD_PATH << "./lein/lib"
 
 require "bundler"
 ENV["BUNDLE_GEMFILE"] = File.join(__dir__, "../omnibus/Gemfile")
@@ -100,6 +103,7 @@ require "dependabot/nuget"
 require "dependabot/python"
 require "dependabot/pub"
 require "dependabot/terraform"
+require "dependabot/lein"
 
 # GitHub credentials with write permission to the repo you want to update
 # (so that you can create a new branch, commit and pull request).
@@ -112,7 +116,7 @@ $options = {
   dependency_names: nil,
   branch: nil,
   cache_steps: [],
-  write: false,
+  write: true,
   clone: false,
   lockfile_only: false,
   reject_external_code: false,
@@ -122,7 +126,7 @@ $options = {
   security_advisories: [],
   security_updates_only: false,
   ignore_conditions: [],
-  pull_request: false
+  pull_request: true
 }
 
 unless ENV["LOCAL_GITHUB_ACCESS_TOKEN"].to_s.strip.empty?
@@ -491,17 +495,17 @@ fetcher_args = {
   credentials: $options[:credentials],
   repo_contents_path: $repo_contents_path
 }
-$config_file = begin
-  cfg_file = Dependabot::Config::FileFetcher.new(**fetcher_args).config_file
-  Dependabot::Config::File.parse(cfg_file.content)
-rescue Dependabot::RepoNotFound, Dependabot::DependencyFileNotFound
-  Dependabot::Config::File.new(updates: [])
-end
-$update_config = $config_file.update_config(
-  $package_manager,
-  directory: $options[:directory],
-  target_branch: $options[:branch]
-)
+# $config_file = begin
+#   cfg_file = Dependabot::Config::FileFetcher.new(**fetcher_args).config_file
+#   Dependabot::Config::File.parse(cfg_file.content)
+# rescue Dependabot::RepoNotFound, Dependabot::DependencyFileNotFound
+#   Dependabot::Config::File.new(updates: [])
+# end
+# $update_config = $config_file.update_config(
+#   $package_manager,
+#   directory: $options[:directory],
+#   target_branch: $options[:branch]
+# )
 
 fetcher = Dependabot::FileFetchers.for_package_manager($package_manager).new(**fetcher_args)
 $files = if $repo_contents_path
@@ -525,7 +529,31 @@ $files = if $repo_contents_path
            end
          end
 
-# Parse the dependency files
+# checkout to feature branch so that all commits are made in this branch.
+Dir.chdir($repo_contents_path) do
+
+  system("git checkout -b feature/dependabot")
+  system("git merge --no-ff --no-commit origin/master")
+  system("mkdir .github")
+  #  system("git commit -m  ")
+end
+
+# Dir.chdir("tmp/aadhar/.github") do
+#   system("cp ../../dependabot.yml . ")
+# end
+
+$config_file = begin
+ cfg_file = Dependabot::Config::FileFetcher.new(**fetcher_args).config_file
+ Dependabot::Config::File.parse(cfg_file.content)
+rescue Dependabot::DependencyFileNotFound
+ Dependabot::Config::File.new(updates: [])
+end
+$update_config = $config_file.update_config(
+ $package_manager,
+ directory: $options[:directory],
+ target_branch: $options[:branch]
+)
+
 puts "=> parsing dependency files"
 parser = Dependabot::FileParsers.for_package_manager($package_manager).new(
   dependency_files: $files,
@@ -727,6 +755,7 @@ dependencies.each do |dep|
 
   updater = file_updater_for(updated_deps)
   updated_files = updater.updated_dependency_files
+  puts $updated_files
 
   # Currently unused but used to create pull requests (from the updater)
   updated_deps.reject do |d|
@@ -743,7 +772,8 @@ dependencies.each do |dep|
 
   if $options[:write]
     updated_files.each do |updated_file|
-      path = File.join(dependency_files_cache_dir, updated_file.name)
+      #path = File.join(dependency_files_cache_dir, updated_file.name)
+      path = File.join($repo_contents_path, updated_file.name)
       puts " => writing updated file ./#{path}"
       dirname = File.dirname(path)
       FileUtils.mkdir_p(dirname) unless Dir.exist?(dirname)
@@ -780,13 +810,27 @@ dependencies.each do |dep|
     puts "Pull Request Title: #{msg.pr_name}"
     puts "--description--\n#{msg.pr_message}\n--/description--"
     puts "--commit--\n#{msg.commit_message}\n--/commit--"
+     Dir.chdir($repo_contents_path) do
+       Dependabot::SharedHelpers.run_shell_command(
+         <<~CMD
+         git add .
+             CMD
+       )
+       system("git commit -m '#{msg.commit_message}'")
+       $files.map!{ |x| x.name == updated_files.first.name ? updated_files.first : x}
+     end
   end
 rescue StandardError => e
   handle_dependabot_error(error: e, dependency: dep)
 end
 
-StackProf.stop if $options[:profile]
-StackProf.results("tmp/stackprof-#{Time.now.strftime('%Y-%m-%d-%H:%M')}.dump") if $options[:profile]
+#StackProf.stop if $options[:profile]
+#StackProf.results("tmp/stackprof-#{Time.now.strftime('%Y-%m-%d-%H:%M')}.dump") if $options[:profile]
+puts "Pushing commits"
+
+Dir.chdir($repo_contents_path) do
+# system("git push origin HEAD:refs/for/feature/dependabot")
+end
 
 puts "🌍 Total requests made: '#{$network_trace_count}'"
 puts "🎈 Package manager version log: #{$package_manager_version_log.join('\n')}" if $package_manager_version_log.any?

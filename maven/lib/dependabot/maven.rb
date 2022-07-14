@@ -15,6 +15,8 @@ require "dependabot/pull_request_creator/labeler"
 Dependabot::PullRequestCreator::Labeler.
   register_label_details("maven", name: "java", colour: "ffa221")
 
+Dependabot::Utils.register_always_clone("maven")
+
 require "dependabot/dependency"
 Dependabot::Dependency.
   register_production_check("maven", ->(groups) { groups != ["test"] })

@@ -27,6 +27,8 @@ Dependabot::Dependency.register_production_check(
   end
 )
 
+Dependabot::Utils.register_always_clone("pip")
+
 # See https://www.python.org/dev/peps/pep-0503/#normalized-names
 Dependabot::Dependency.register_name_normaliser(
   "pip",
