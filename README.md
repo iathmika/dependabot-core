@@ -1,11 +1,11 @@
-This branch contains the code for adding Leiningen (Clojure) support to dependabot.
+This fork was created in order to add Leiningen (Clojure) support to dependabot in addition to other package managers.
 
 
 To run dependabot for a clojure project locally, follow the given steps-
 
-- Clone this repository and switch to branch feature/clojure-spport
+- Clone this repository and make sure you have docker installed. 
 
-- Pull the docker image for dependabot from - https://hub.docker.com/r/athmika/dependabot-core-development and run the development container -
+- Using the commands given below, pull the docker image for dependabot from - https://hub.docker.com/r/athmika/dependabot-core-development and run the development container -
 
 ```shell
 $ docker pull athmika/dependabot-core-development:latest 
